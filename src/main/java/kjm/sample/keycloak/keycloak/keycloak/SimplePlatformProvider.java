@@ -10,6 +10,7 @@ import org.keycloak.platform.PlatformProvider;
 import org.keycloak.services.ServicesLogger;
 
 public class SimplePlatformProvider implements PlatformProvider {
+
     public SimplePlatformProvider() {
         Profile.configure(new PropertiesProfileConfigResolver(System.getProperties()),
                 new PropertiesFileProfileConfigResolver());
@@ -18,8 +19,18 @@ public class SimplePlatformProvider implements PlatformProvider {
     Runnable shutdownHook;
 
     @Override
-    public void exit(Throwable arg0) {
-        ServicesLogger.LOGGER.fatal(arg0);
+    public void onStartup(Runnable startupHook) {
+        startupHook.run();
+    }
+
+    @Override
+    public void onShutdown(Runnable shutdownHook) {
+        this.shutdownHook = shutdownHook;
+    }
+
+    @Override
+    public void exit(Throwable cause) {
+        ServicesLogger.LOGGER.fatal(cause);
         exit(1);
     }
 
@@ -33,28 +44,17 @@ public class SimplePlatformProvider implements PlatformProvider {
     }
 
     @Override
-    public ClassLoader getScriptEngineClassLoader(Scope arg0) {
-        return null;
+    public File getTmpDirectory() {
+        return new File(System.getProperty("java.io.tmpdir"));
     }
 
     @Override
-    public File getTmpDirectory() {
-        return new File(System.getProperty("java.io.tmpdir"));
+    public ClassLoader getScriptEngineClassLoader(Scope scriptProviderConfig) {
+        return null;
     }
 
     @Override
     public String name() {
         return "oauth-authorization-server";
     }
-
-    @Override
-    public void onShutdown(Runnable arg0) {
-        this.shutdownHook = arg0;
-    }
-
-    @Override
-    public void onStartup(Runnable arg0) {
-        arg0.run();
-    }
-
 }
